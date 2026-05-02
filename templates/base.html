@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title or 'Sign Language Translator' }}{% endblock %}</title>
+    <meta name="description" content="Professional sign language recognition with photo upload, real-time webcam translation, and confidence-based predictions.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{{ body_class or '' }}" data-page="{{ active_page or 'default' }}">
+    <!-- Advanced Dynamic Backgrounds -->
+    <div class="bg-orb orb-one" aria-hidden="true"></div>
+    <div class="bg-orb orb-two" aria-hidden="true"></div>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="nav-shell">
+            <a href="{{ url_for('home') }}" class="brand" aria-label="Sign Language Translator home">
+                <span class="brand-mark">SL</span>
+                <span class="brand-text">
+                    <strong>Sign Language Translator</strong>
+                    <span>Vision-powered gesture recognition</span>
+                </span>
+            </a>
+
+            <nav class="nav" id="siteNav">
+                <a href="{{ url_for('home') }}" class="{% if active_page == 'home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('dashboard') }}" class="{% if active_page == 'dashboard' %}active{% endif %}">Upload</a>
+                <a href="{{ url_for('live') }}" class="{% if active_page == 'live' %}active{% endif %}">Live Studio</a>
+                <a href="{{ url_for('about') }}" class="{% if active_page == 'about' %}active{% endif %}">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-shell">
+            <div>
+                <strong style="color: var(--text-main); font-size: 1.2rem;">Sign Language Translator</strong>
+                <p style="color: var(--text-muted); max-width: 400px; margin-top: 0.5rem;">Built for fast recognition, clear feedback, and a highly polished interactive sign-language experience.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Upload a sign</a>
+                <a href="{{ url_for('live') }}" class="btn btn-primary">Launch live studio</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

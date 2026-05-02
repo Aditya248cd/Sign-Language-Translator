@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="section-shell" style="padding-top: 4rem; padding-bottom: 2rem;">
+    <div class="page-heading" data-reveal="up" style="margin: 0 auto;">
+        <span class="section-label">Interactive Upload Studio</span>
+        <h1 class="large-title" style="margin-bottom: 1rem; background: linear-gradient(135deg, #fff, var(--success)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Analyze a single sign image.</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+            Upload a hand-sign image. Watch the UI react, preview your frame, and let the network classify the gesture with ranked confidence.
+        </p>
+        <div class="page-badges">
+            <span class="mini-badge">Drag & Drop Ready</span>
+            <span class="mini-badge">Confidence scores</span>
+        </div>
+    </div>
+</section>
+
+<section class="section-shell" style="padding-top: 0;">
+    <div class="dashboard-grid">
+        <article class="glass-card" data-reveal="up">
+            <div style="margin-bottom: 1rem;">
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 600;">Input Required</span>
+                <h2 style="font-size: 1.5rem; margin-top: 0.25rem;">Drop your image here</h2>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" class="upload-form">
+                <label class="upload-dropzone" for="imageInput">
+                    <span class="upload-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </span>
+                    <strong>Choose or drag an image to analyze</strong>
+                    <span style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">JPG, JPEG, or PNG</span>
+                    <input
+                        id="imageInput"
+                        type="file"
+                        name="image"
+                        accept="image/*"
+                        required
+                        data-file-input
+                    >
+                </label>
+
+                <div class="upload-actions">
+                    <span id="selectedFileName" class="file-pill">
+                        {% if image_url %}
+                        Uploaded image loaded
+                        {% else %}
+                        No file selected yet
+                        {% endif %}
+                    </span>
+                    <button type="submit" class="btn btn-primary">Process Image</button>
+                </div>
+            </form>
+
+            <div class="tip-grid" style="grid-template-columns: 1fr; gap: 1rem; margin-top: 2rem;">
+                <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 1rem;">
+                    <div style="background: rgba(255,255,255,0.1); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">1</div>
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Keep one hand clearly centered in the frame.</span>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 1rem;">
+                    <div style="background: rgba(255,255,255,0.1); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">2</div>
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Avoid extremely crowded or noisy backgrounds.</span>
+                </div>
+            </div>
+        </article>
+
+        <div>
+            <article class="glass-card" style="margin-bottom: 2rem; padding: 1.5rem;" data-reveal="left">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.1rem;">Live Preview</h3>
+                    <span style="font-size: 0.75rem; background: rgba(99,102,241,0.2); color: var(--accent-hover); padding: 0.2rem 0.6rem; border-radius: 12px;">Interactive</span>
+                </div>
+                <div class="preview-shell">
+                    <img
+                        id="imagePreview"
+                        src="{{ image_url or '' }}"
+                        alt="Uploaded sign preview"
+                        class="preview-img {% if not image_url %}is-hidden{% endif %}"
+                    >
+                    <div id="previewEmpty" class="preview-empty {% if image_url %}is-hidden{% endif %}">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        <span class="preview-empty-label">Awaiting drop</span>
+                        <p style="font-size: 0.85rem;">Your selected image will appear here instantly.</p>
+                    </div>
+                </div>
+            </article>
+
+            <article class="glass-card" data-reveal="left" style="animation-delay: 0.2s;">
+                <div style="margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.2rem;">Detailed Output</h3>
+                </div>
+
+                {% if prediction %}
+                <div class="result-summary {% if detail and detail.error %}has-error{% endif %}">
+                    <p style="text-transform: uppercase; font-size: 0.75rem; font-weight: bold; color: rgba(255,255,255,0.5); margin-bottom: 0.5rem;">Detected Sign</p>
+                    <p class="prediction-main">
+                        {% if detail and detail.label %}
+                        {{ detail.label }}
+                        {% else %}
+                        {{ prediction }}
+                        {% endif %}
+                    </p>
+
+                    {% if detail and detail.confidence is not none %}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1.5rem;">
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">Confidence Score</p>
+                        <p style="font-weight: bold; font-size: 1.2rem; margin: 0;">{{ (detail.confidence * 100)|round(1) }}%</p>
+                    </div>
+                    <div class="confidence-meter">
+                        <span style="width: {{ (detail.confidence * 100)|round(1) }}%;"></span>
+                    </div>
+                    {% else %}
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem;">{{ prediction }}</p>
+                    {% endif %}
+                </div>
+
+                {% if detail and detail.top3 %}
+                <div>
+                    <h4 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 1rem;">Alternative Matches</h4>
+                    <ul class="rank-list">
+                        {% for item in detail.top3 %}
+                        <li class="rank-item">
+                            <div class="rank-head">
+                                <span>{{ item.label }}</span>
+                                <span style="font-variant-numeric: tabular-nums;">{{ (item.confidence * 100)|round(1) }}%</span>
+                            </div>
+                            <span class="rank-bar"><span style="width: {{ (item.confidence * 100)|round(1) }}%;"></span></span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% else %}
+                <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <p style="font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">Output Console Empty</p>
+                    <p style="font-size: 0.9rem; max-width: 250px; margin: 0 auto;">Process an image to view network confidence graphs here.</p>
+                </div>
+                {% endif %}
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

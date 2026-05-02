@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Sign Language Translator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav">
+            <a href="/">Home</a>
+            <a href="/dashboard">Upload</a>
+            <a href="/live">Live webcam</a>
+            <a href="/about" class="active">About</a>
+        </nav>
+    </header>
+    <main class="container about-simple">
+        <h1>About the project</h1>
+        <p class="about-para">This is a sign language translator that turns hand gestures into text. You can upload a photo of a sign or use the live webcam: the app finds your hand, reads its shape with computer vision, and runs a machine learning model to predict which sign it is. Results include the label, confidence, and optional on-screen box around the hand.</p>
+        <p class="about-para">You train the model on your own images per sign class (folders under <code>data/raw</code>), then extract landmarks and train so the app learns your vocabulary.</p>
+
+        <h2>What we used</h2>
+        <ul class="about-list">
+            <li><strong>Python</strong> — core language</li>
+            <li><strong>Flask</strong> — web server and pages</li>
+            <li><strong>OpenCV</strong> — webcam and image handling</li>
+            <li><strong>MediaPipe Hands</strong> — 21 hand landmarks per frame</li>
+            <li><strong>NumPy</strong> — feature vectors from landmarks</li>
+            <li><strong>scikit-learn</strong> — <code>StandardScaler</code> + <code>HistGradientBoostingClassifier</code> (pipeline saved as <code>models/model_bundle.pkl</code>)</li>
+            <li><strong>Joblib</strong> — saving and loading the model</li>
+            <li><strong>Pillow</strong> — decoding images from the live webcam API</li>
+            <li><strong>HTML, CSS, JavaScript</strong> — UI, live camera, overlays</li>
+        </ul>
+
+        <p class="about-cta"><a href="/" class="btn btn-primary">Back to home</a></p>
+    </main>
+</body>
+</html>

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="section-shell hero-grid">
+        <div class="hero-copy" data-reveal="up">
+            <span class="section-label">Professional Sign Recognition</span>
+            <h1 class="hero-title">Translate hand gestures into digital language with a pro-grade studio workflow.</h1>
+            <p class="hero-copy-text">
+                Upload images or utilize the live webcam studio to detect signs, inspect model confidence, and present real-time predictions inside a highly polished, interactive interface that never feels empty.
+            </p>
+
+            <div class="hero-actions">
+                <a href="{{ url_for('live') }}" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    Launch Live Studio
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Upload Image</a>
+            </div>
+
+            <div class="hero-proof">
+                <div class="proof-card">
+                    <strong data-count="21">0</strong>
+                    <span>Landmarks per frame</span>
+                </div>
+                <div class="proof-card">
+                    <strong data-count="3">0</strong>
+                    <span>Ranked predictions</span>
+                </div>
+                <div class="proof-card">
+                    <strong data-count="2">0</strong>
+                    <span>Seamless workflows</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-stage" data-reveal="left">
+            <div class="hero-stage-card glass-card">
+                <div class="stage-topbar">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="hero-stage-media">
+                    <!-- Placeholder aesthetic image for hero -->
+                    <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center;">
+                         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="rgba(99, 102, 241, 0.4)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                    <div class="hero-stage-overlay"></div>
+                    <div class="stage-chip chip-top">Live scanner active</div>
+                    <div class="stage-chip chip-bottom">Tracing 21 points</div>
+                </div>
+                <div class="stage-summary">
+                    <div>
+                        <span>Current sign</span>
+                        <strong>Awaiting Subject</strong>
+                    </div>
+                    <div>
+                        <span>Engine Match</span>
+                        <strong>--%</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="floating-panel panel-left">
+                <span class="floating-label">Interactive UI</span>
+                <strong>Live overlays & confidence</strong>
+            </div>
+
+            <div class="floating-panel panel-right">
+                <span class="floating-label">Real-time</span>
+                <strong>Smooth frame analysis</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="section-heading" data-reveal="up">
+        <span class="section-label">State of the Art Workflow</span>
+        <h2 class="large-title" style="font-size: 2.5rem;">Intelligent, frictionless recognition.</h2>
+        <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto; font-size: 1.1rem;">
+            Whether you are testing an image or tracking gestures via camera, the feedback is instant, clear, and wrapped in a premium dark glass aesthetic.
+        </p>
+    </div>
+
+    <div class="feature-grid">
+        <article class="glass-card" data-reveal="up">
+            <span class="feature-number">01</span>
+            <h3 style="margin-bottom: 0.5rem; color: #fff;">Interactive UI Uploads</h3>
+            <p style="color: var(--text-muted);">A focused file dropzone that reacts to your dragged files, offers instant previews, and securely manages context before the model even runs.</p>
+        </article>
+        <article class="glass-card" data-reveal="up">
+            <span class="feature-number">02</span>
+            <h3 style="margin-bottom: 0.5rem; color: #fff;">Live Camera Spoofing</h3>
+            <p style="color: var(--text-muted);">An enhanced webcam layout simulating complex scanner overlays. Easily start or stop the camera with dynamic UI state updates.</p>
+        </article>
+        <article class="glass-card" data-reveal="up">
+            <span class="feature-number">03</span>
+            <h3 style="margin-bottom: 0.5rem; color: #fff;">Rich Confidence Reports</h3>
+            <p style="color: var(--text-muted);">See exactly what the model predicts. High-contrast meters map out probability fields and top alternatives visually.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="cta-band" data-reveal="up">
+        <div style="max-width: 700px; margin: 0 auto;">
+            <span class="section-label" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;">Start Now</span>
+            <h2 class="large-title" style="font-size: 2.5rem; margin-top: 1rem;">Experience the pro upgrade.</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem;">Stop staring at blank pages. Try the fully featured, interactive file upload and live recognition environments.</p>
+            
+            <div class="cta-band-actions">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="background: #fff; color: var(--bg-dark); box-shadow: 0 4px 20px rgba(255,255,255,0.3);">Go to Upload</a>
+                <a href="{{ url_for('live') }}" class="btn btn-ghost">Start Camera</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

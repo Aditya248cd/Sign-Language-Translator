@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="subpage-hero">
+    <div class="section-shell page-heading">
+        <div data-reveal="up">
+            <span class="section-label">About The Project</span>
+            <h1 class="section-title large-title">A sign-language recognition project built with computer vision, machine learning, and a more polished web interface.</h1>
+            <p class="section-copy">
+                This system turns hand gestures into readable text by extracting landmarks, classifying the gesture, and presenting the result through image and live-camera workflows.
+            </p>
+        </div>
+        <div class="page-badges" data-reveal="left">
+            <span class="mini-badge">Flask app</span>
+            <span class="mini-badge">MediaPipe landmarks</span>
+            <span class="mini-badge">scikit-learn model</span>
+        </div>
+    </div>
+</section>
+
+<section class="section-shell section-block about-grid">
+    <article class="glass-card" data-reveal="up">
+        <div class="card-heading">
+            <span class="card-kicker">What it does</span>
+            <h2>From hand shape to text output</h2>
+        </div>
+        <p class="section-copy compact-copy">
+            The app detects a hand, extracts landmark-based features, and sends them through the trained model to predict which sign is being shown. The result is displayed with confidence and alternative matches so the output feels more transparent.
+        </p>
+    </article>
+
+    <article class="glass-card" data-reveal="left">
+        <div class="card-heading">
+            <span class="card-kicker">How you use it</span>
+            <h2>Two practical modes</h2>
+        </div>
+        <ul class="feature-list">
+            <li>Upload a single image to analyze one clear hand sign.</li>
+            <li>Use the live studio to run predictions continuously from the webcam.</li>
+            <li>Review the detected label, confidence, and ranked alternatives.</li>
+        </ul>
+    </article>
+
+    <article class="glass-card stack-card" data-reveal="up">
+        <div class="card-heading">
+            <span class="card-kicker">Technology stack</span>
+            <h2>Core tools behind the system</h2>
+        </div>
+        <div class="stack-grid">
+            <div class="stack-item"><strong>Python</strong><span>application logic</span></div>
+            <div class="stack-item"><strong>Flask</strong><span>web pages and routes</span></div>
+            <div class="stack-item"><strong>OpenCV</strong><span>camera and image handling</span></div>
+            <div class="stack-item"><strong>MediaPipe</strong><span>21 hand landmarks</span></div>
+            <div class="stack-item"><strong>NumPy</strong><span>feature preparation</span></div>
+            <div class="stack-item"><strong>scikit-learn</strong><span>trained classifier pipeline</span></div>
+        </div>
+    </article>
+
+    <article class="glass-card" data-reveal="left">
+        <div class="card-heading">
+            <span class="card-kicker">Training flow</span>
+            <h2>How the model learns</h2>
+        </div>
+        <p class="section-copy compact-copy">
+            Organize labeled images by sign class under <code>data/raw</code>, extract landmarks, train the model bundle, and reuse the saved artifacts for both upload and live prediction workflows.
+        </p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary inline-btn">Try the upload studio</a>
+    </article>
+</section>
+{% endblock %}

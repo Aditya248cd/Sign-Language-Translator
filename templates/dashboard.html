@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Sign Language Translator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav">
+            <a href="/">Home</a>
+            <a href="/dashboard" class="active">Upload</a>
+            <a href="/live">Live webcam</a>
+            <a href="/about">About</a>
+        </nav>
+    </header>
+    <main class="container">
+        <h1>Image prediction</h1>
+        <p class="lead">Upload a photo of a single hand sign. The model uses MediaPipe hand landmarks and a gradient-boosted classifier.</p>
+
+        <form method="POST" enctype="multipart/form-data" class="card form-card">
+            <label class="file-label">
+                <span>Choose image</span>
+                <input type="file" name="image" accept="image/*" required>
+            </label>
+            <button type="submit" class="btn btn-primary">Predict</button>
+        </form>
+
+        {% if image_url %}
+        <section class="card result-card">
+            <h2>Uploaded image</h2>
+            <img src="{{ image_url }}" alt="Uploaded sign" class="preview-img">
+        </section>
+        {% endif %}
+
+        {% if prediction %}
+        <section class="card result-card">
+            <h2>Result</h2>
+            <p class="prediction-main">{{ prediction }}</p>
+            {% if detail and detail.top3 %}
+            <h3>Top matches</h3>
+            <ul class="top3">
+                {% for item in detail.top3 %}
+                <li><span class="lbl">{{ item.label }}</span> <span class="conf">{{ (item.confidence * 100)|round(1) }}%</span></li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </section>
+        {% endif %}
+    </main>
+</body>
+</html>

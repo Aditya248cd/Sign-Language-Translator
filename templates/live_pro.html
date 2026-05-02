@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<section class="section-shell" style="padding-top: 4rem; padding-bottom: 2rem;">
+    <div class="page-heading" data-reveal="up" style="margin: 0 auto;">
+        <span class="section-label">Live Recognition Studio</span>
+        <h1 class="large-title" style="margin-bottom: 1rem; background: linear-gradient(135deg, #fff, var(--accent-hover)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Real-time camera analysis.</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+            Activate the camera to stream processing frames into the network. The interface filters edge cases and smooths results to deliver stable translation HUD overlays.
+        </p>
+        <div class="page-badges">
+            <span class="mini-badge" style="border-color: var(--success); color: var(--success);">Real-time</span>
+            <span class="mini-badge">Scanning grid HUD</span>
+        </div>
+    </div>
+</section>
+
+<section class="section-shell" style="padding-top: 0;">
+    <div class="live-layout">
+        <article class="glass-card" data-reveal="up">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div>
+                    <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 600;">Feed Input</span>
+                    <h2 style="font-size: 1.5rem; margin-top: 0.25rem;">Camera Monitor</h2>
+                </div>
+                <span id="streamState" style="font-size: 0.75rem; background: rgba(255,255,255,0.05); padding: 0.3rem 0.8rem; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px;">Idle</span>
+            </div>
+
+            <div class="video-stage" id="videoStage" style="border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); transition: all 0.3s ease;">
+                <video id="video" playsinline autoplay muted style="opacity: 0.6; filter: grayscale(20%) contrast(120%);"></video>
+                <canvas id="overlay" style="transition: all 0.3s ease;"></canvas>
+                <!-- Aesthetic Scan Grid Overlay for Pro feel -->
+                <div style="position: absolute; inset: 0; background: linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px); background-size: 20px 20px; pointer-events: none;"></div>
+            </div>
+            <canvas id="canvas" hidden></canvas>
+
+            <div class="live-toolbar">
+                <button type="button" id="btnStart" class="btn btn-primary" style="flex: 1;">Start Scanner</button>
+                <button type="button" id="btnStop" class="btn btn-secondary" style="flex: 1;" disabled>Stop Scanner</button>
+            </div>
+            
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm);">
+                <label style="display: flex; align-items: center; gap: 0.75rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer;">
+                    <input type="checkbox" id="chkSmooth" checked style="width: 16px; height: 16px; accent-color: var(--accent);">
+                    Apply deep smoothing filter across latest frames
+                </label>
+            </div>
+        </article>
+
+        <div>
+            <article class="glass-card" data-reveal="left" style="margin-bottom: 2rem;">
+                <div style="margin-bottom: 2rem;">
+                    <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--success); font-weight: 600;">Live Feed Output</span>
+                    <h2 style="font-size: 1.5rem; margin-top: 0.25rem;">Active Translation</h2>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); padding: 2rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden;">
+                    <p id="outLabel" class="live-label" style="font-size: 3rem; margin-bottom: 0.5rem; color: var(--text-muted);">Awaiting Stream</p>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-top: 1rem;">
+                        <span style="color: var(--text-muted);">Confidence Track</span>
+                        <span id="outConf" style="font-weight: bold;">--%</span>
+                    </div>
+                    <div class="meter-track" style="margin-top: 0.5rem; height: 8px;">
+                        <span id="confFill" class="meter-fill" style="width: 0%; background: linear-gradient(90deg, var(--success), var(--accent));"></span>
+                    </div>
+                    <p id="outErr" style="color: var(--danger); font-size: 0.85rem; margin-top: 1rem;" hidden></p>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem;">Candidate Network Streams</h3>
+                    <ul id="outTop3" class="rank-list">
+                        <!-- Populated by actual JS if wired, otherwise empty -->
+                        <div style="text-align: center; color: rgba(255,255,255,0.2); padding: 1rem 0;">No active candidates</div>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="glass-card" data-reveal="left" style="animation-delay: 0.2s; padding: 1.5rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">System Status</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size: 0.9rem; color: var(--text-muted);">Camera Input</span>
+                        <span id="camStatus" style="font-size: 0.9rem; font-weight: 500;">Idle</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size: 0.9rem; color: var(--text-muted);">Prediction Engine</span>
+                        <span style="font-size: 0.9rem; font-weight: 500; color: var(--success);">Online ✅</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.9rem; color: var(--text-muted);">Frame Rate Tracking</span>
+                        <span style="font-size: 0.9rem; font-weight: 500;">~30 fps</span>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

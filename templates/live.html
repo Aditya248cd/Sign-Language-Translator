@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live webcam — Sign Language Translator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav">
+            <a href="/">Home</a>
+            <a href="/dashboard">Upload</a>
+            <a href="/live" class="active">Live webcam</a>
+            <a href="/about">About</a>
+        </nav>
+    </header>
+    <main class="container live-page">
+        <h1>Live webcam recognition</h1>
+        <p class="lead">Allow camera access. The server returns a hand box and sign label so they can be drawn over your video. Press <strong>Start</strong> to begin.</p>
+
+        <div class="live-toolbar">
+            <button type="button" id="btnStart" class="btn btn-primary">Start camera</button>
+            <button type="button" id="btnStop" class="btn btn-secondary" disabled>Stop</button>
+            <label class="inline-check"><input type="checkbox" id="chkSmooth" checked> Smooth predictions (last 5 frames)</label>
+        </div>
+
+        <div class="live-grid">
+            <div class="card video-wrap">
+                <div class="video-stage" id="videoStage">
+                    <video id="video" playsinline autoplay muted></video>
+                    <canvas id="overlay"></canvas>
+                </div>
+                <canvas id="canvas" hidden></canvas>
+                <p id="camStatus" class="status muted">Camera idle</p>
+            </div>
+            <div class="card live-readout">
+                <h2>Current sign</h2>
+                <p id="outLabel" class="live-label">—</p>
+                <p id="outConf" class="live-conf muted"></p>
+                <h3>Top 3</h3>
+                <ul id="outTop3" class="top3"></ul>
+                <p id="outErr" class="status error" hidden></p>
+            </div>
+        </div>
+    </main>
+    <script>
+(function () {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const octx = overlay.getContext('2d');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const chkSmooth = document.getElementById('chkSmooth');
+    const camStatus = document.getElementById('camStatus');
+    const outLabel = document.getElementById('outLabel');
+    const outConf = document.getElementById('outConf');
+    const outTop3 = document.getElementById('outTop3');
+    const outErr = document.getElementById('outErr');
+
+    let stream = null;
+    let liveActive = false;
+    let loopPromise = null;
+    const history = [];
+    const HISTORY_MAX = 5;
+    const FRAME_GAP_MS = 35;
+
+    let lastCapW = 0;
+    let lastCapH = 0;
+    let overlayState = null;
+
+    function setError(msg) {
+        if (!msg) {
+            outErr.hidden = true;
+            outErr.textContent = '';
+            return;
+        }
+        outErr.hidden = false;
+        outErr.textContent = msg;
+    }
+
+    function majorityLabel(labels) {
+        const counts = {};
+        for (const L of labels) {
+            counts[L] = (counts[L] || 0) + 1;
+        }
+        let best = labels[labels.length - 1];
+        let n = 0;
+        for (const k in counts) {
+            if (counts[k] > n) { n = counts[k]; best = k; }
+        }
+        return best;
+    }
+
+    function renderTop3(items) {
+        outTop3.innerHTML = '';
+        if (!items || !items.length) return;
+        for (const it of items) {
+            const li = document.createElement('li');
+            li.innerHTML = '<span class="lbl"></span> <span class="conf"></span>';
+            li.querySelector('.lbl').textContent = it.label;
+            li.querySelector('.conf').textContent = (it.confidence * 100).toFixed(1) + '%';
+            outTop3.appendChild(li);
+        }
+    }
+
+    function syncOverlaySize() {
+        const w = Math.max(1, Math.floor(video.clientWidth));
+        const h = Math.max(1, Math.floor(video.clientHeight));
+        overlay.width = w;
+        overlay.height = h;
+        drawOverlay();
+    }
+
+    function drawOverlay() {
+        const ow = overlay.width;
+        const oh = overlay.height;
+        octx.clearRect(0, 0, ow, oh);
+        if (!overlayState || !overlayState.bbox || !overlayState.iw || !overlayState.ih) return;
+        const b = overlayState.bbox;
+        const sx = ow / overlayState.iw;
+        const sy = oh / overlayState.ih;
+        const x = b.x * sx;
+        const y = b.y * sy;
+        const bw = b.width * sx;
+        const bh = b.height * sy;
+        octx.strokeStyle = '#22c55e';
+        octx.lineWidth = Math.max(2, Math.round(ow / 320));
+        octx.strokeRect(x, y, bw, bh);
+        const label = overlayState.displayLabel || overlayState.label || '';
+        if (!label) return;
+        const conf = overlayState.confidence;
+        const sub = conf != null ? ' ' + (conf * 100).toFixed(0) + '%' : '';
+        const text = (label + sub).trim();
+        octx.font = '600 16px "Segoe UI", system-ui, sans-serif';
+        const pad = 8;
+        const tw = Math.min(ow - x - pad, octx.measureText(text).width + pad * 2);
+        const th = 28;
+        let ty = y - th - 4;
+        if (ty < 4) ty = y + bh + 4;
+        octx.fillStyle = 'rgba(21, 34, 28, 0.92)';
+        octx.fillRect(x, ty, tw, th);
+        octx.fillStyle = '#ecfdf5';
+        octx.fillText(text, x + pad, ty + 20);
+    }
+
+    async function captureAndPredict() {
+        if (!stream || video.readyState < 2) return;
+        const w = video.videoWidth;
+        const h = video.videoHeight;
+        if (!w || !h) return;
+        const capW = Math.min(w, 480);
+        canvas.width = capW;
+        canvas.height = Math.round(h * (capW / w));
+        lastCapW = canvas.width;
+        lastCapH = canvas.height;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.62);
+        try {
+            const res = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: dataUrl })
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                setError(data.error || 'Request failed');
+                overlayState = null;
+                drawOverlay();
+                return;
+            }
+            setError('');
+            if (!data.hand_detected) {
+                outLabel.textContent = '—';
+                outConf.textContent = data.message || 'No hand detected';
+                renderTop3([]);
+                overlayState = null;
+                drawOverlay();
+                return;
+            }
+            let label = data.label;
+            if (chkSmooth.checked && label) {
+                history.push(label);
+                if (history.length > HISTORY_MAX) history.shift();
+                label = majorityLabel(history);
+            } else {
+                history.length = 0;
+            }
+            outLabel.textContent = label || '—';
+            outConf.textContent = data.confidence != null
+                ? (data.confidence * 100).toFixed(1) + '% confidence'
+                : '';
+            renderTop3(data.top3);
+            overlayState = {
+                bbox: data.bbox,
+                iw: data.image_width || lastCapW,
+                ih: data.image_height || lastCapH,
+                label: data.label,
+                displayLabel: label,
+                confidence: data.confidence
+            };
+            drawOverlay();
+        } catch (e) {
+            setError(String(e));
+            overlayState = null;
+            drawOverlay();
+        }
+    }
+
+    async function predictionLoop() {
+        while (liveActive && stream) {
+            await captureAndPredict();
+            if (!liveActive) break;
+            await new Promise((r) => setTimeout(r, FRAME_GAP_MS));
+        }
+    }
+
+    btnStart.addEventListener('click', async () => {
+        setError('');
+        camStatus.textContent = 'Starting camera…';
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: false
+            });
+            video.srcObject = stream;
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            camStatus.textContent = 'Camera on — predicting…';
+            const syncOnce = () => {
+                requestAnimationFrame(syncOverlaySize);
+            };
+            video.addEventListener('loadedmetadata', syncOnce, { once: true });
+            video.addEventListener('playing', syncOnce, { once: true });
+            liveActive = true;
+            loopPromise = predictionLoop();
+        } catch (e) {
+            camStatus.textContent = 'Camera blocked or unavailable';
+            setError(String(e));
+        }
+    });
+
+    btnStop.addEventListener('click', () => {
+        liveActive = false;
+        loopPromise = null;
+        history.length = 0;
+        overlayState = null;
+        octx.clearRect(0, 0, overlay.width, overlay.height);
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
+            stream = null;
+        }
+        video.srcObject = null;
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+        camStatus.textContent = 'Camera stopped';
+        outLabel.textContent = '—';
+        outConf.textContent = '';
+        renderTop3([]);
+        setError('');
+    });
+
+    window.addEventListener('resize', () => {
+        if (stream) syncOverlaySize();
+    });
+})();
+    </script>
+</body>
+</html>
